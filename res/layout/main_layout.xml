@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <org.opencv.android.JavaCameraView
+        android:id="@+id/recapturing_camera_preview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" />
+
+    <ImageButton
+        android:id="@+id/image_picker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:contentDescription="@string/recapturing_image"
+        android:maxHeight="@dimen/image_button_max_width"
+        android:maxWidth="@dimen/image_button_max_height"
+        android:src="@drawable/picture_preview" />
+
+    <SeekBar
+        android:id="@+id/distance_seeker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_toLeftOf="@+id/image_picker"
+        android:max="@integer/max_distance" />
+
+    <TextView
+        android:text="@string/default_distance"
+        android:id="@+id/distance_text"
+        android:paddingRight="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/distance_seeker"
+        android:layout_alignRight="@+id/distance_seeker"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+</RelativeLayout>

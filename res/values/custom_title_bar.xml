@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="title_background">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="custom_titlebar">
+        <item name="android:windowTitleBackgroundStyle">@style/title_background</item>
+        <item name="android:windowTitleSize">35dp</item>
+    </style>
+
+</resources>

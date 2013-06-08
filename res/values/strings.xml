@@ -1,0 +1,10 @@
+<resources>
+
+    <string name="app_name">Recapturing</string>
+    <string name="menu_start_new_game">Start Game</string>
+    <string name="menu_toggle_tile_numbers">TODO</string>
+    <string name="menu_load_image">load image</string>
+    <string name="menu_toggle_toggle_method">toggle registration method</string>
+    <string name="recapturing_image">Recapturing Image</string>
+	<string name="default_distance">Feature Distance Limit: 20</string>
+</resources>

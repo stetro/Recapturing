@@ -7,4 +7,5 @@
     <string name="menu_toggle_toggle_method">toggle registration method</string>
     <string name="recapturing_image">Recapturing Image</string>
 	<string name="default_distance">Feature Distance Limit: 20</string>
+	<string name="fps_text">FPS: 0</string>
 </resources>

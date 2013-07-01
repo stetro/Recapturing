@@ -1,5 +1,8 @@
 package de.stetro.recapturing;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -9,6 +12,7 @@ import org.opencv.core.Mat;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -16,7 +20,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,6 +29,7 @@ import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import de.stetro.recapturing.pojo.FramePackage;
 
 public class MainActivity extends Activity implements CvCameraViewListener, View.OnTouchListener {
 
@@ -86,6 +90,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 	}
 
 	private static final String TAG = "Recapturing App";
+	private static ContextWrapper context;
 
 	private CameraBridgeViewBase openCvCameraView;
 	private RecapturingProcessor recapturingProcessor;
@@ -96,6 +101,7 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 	private BaseLoaderCallback mLoaderCallback = new OpenCVBaseLoaderCallbackListener(this);
 
 	private ImageButton imagePicker;
+	private TextView fpsTextView;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -105,6 +111,8 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 		prepareRecapturingProcessor();
 		prepareImagePicker();
 		prepareDistanceSeekBar();
+		fpsTextView = (TextView) findViewById(R.id.fps_textview);
+		MainActivity.context = this;
 	}
 
 	private void prepareDistanceSeekBar() {
@@ -129,7 +137,6 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
 	private void prepareRecapturingProcessor() {
 		recapturingProcessor = new RecapturingProcessor();
-		recapturingProcessor.prepareNewViewWithImage();
 	}
 
 	private void prepareCameraView() {
@@ -163,17 +170,6 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 		return true;
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		Log.i(TAG, "Menu Item selected " + item);
-		if (item.getItemId() == R.id.menu_load_image) {
-			recapturingProcessor.prepareNewViewWithImage();
-		} else if (item.getItemId() == R.id.menu_toggle_method) {
-			recapturingProcessor.toggleRegistrationMethod();
-		}
-		return true;
-	}
-
 	public void onCameraViewStarted(int width, int height) {
 		viewWidth = width;
 		viewHeight = height;
@@ -196,7 +192,21 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 	}
 
 	public Mat onCameraFrame(Mat inputFrame) {
-		return recapturingProcessor.process(inputFrame);
+		FramePackage fp = recapturingProcessor.process(inputFrame);
+		displayFPS(fp);
+		fp.getFrame();
+		return fp.getFrame();
+	}
+
+	private void displayFPS(final FramePackage fp) {
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				fpsTextView.setText("FPS: " + fp.getDisplayRate() + "\n" + "Detection:" + fp.getDetectionTime() + "ms\n" + "Description:" + fp.getDescriptionTime() + "ms\n" + "Matching:"
+						+ fp.getMatchingTime() + "ms\n" + "Good Matches:" + fp.getMatches() + "\n" + "Filter:" + fp.getFilterTime() + "ms\n" + "Homography:" + fp.getDltTime() + "ms\n");
+
+			}
+		});
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
@@ -237,5 +247,20 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 			resized = Bitmap.createScaledBitmap(bitmap, previewSize, (int) (previewSize * factor), true);
 		}
 		return resized;
+	}
+
+	public static String getTempFileName(String extension) {
+		File cache = context.getCacheDir();
+		if (!extension.startsWith("."))
+			extension = "." + extension;
+		try {
+			File tmp = File.createTempFile("OpenCV", extension, cache);
+			String path = tmp.getAbsolutePath();
+			tmp.delete();
+			return path;
+		} catch (IOException e) {
+			Log.d("ERROR", "Failed to get temp file name. Exception is thrown: " + e);
+		}
+		return null;
 	}
 }

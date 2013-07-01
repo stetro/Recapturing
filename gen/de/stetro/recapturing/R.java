@@ -49,10 +49,11 @@ containing a value of this type.
         public static final int back=0x7f040001;
         public static final int distance_seeker=0x7f040005;
         public static final int distance_text=0x7f040006;
+        public static final int fps_textview=0x7f040007;
         public static final int front=0x7f040002;
         public static final int image_picker=0x7f040004;
-        public static final int menu_load_image=0x7f040007;
-        public static final int menu_toggle_method=0x7f040008;
+        public static final int menu_load_image=0x7f040008;
+        public static final int menu_toggle_method=0x7f040009;
         public static final int recapturing_camera_preview=0x7f040003;
     }
     public static final class integer {
@@ -67,6 +68,7 @@ containing a value of this type.
     public static final class string {
         public static final int app_name=0x7f080000;
         public static final int default_distance=0x7f080006;
+        public static final int fps_text=0x7f080007;
         public static final int menu_load_image=0x7f080003;
         public static final int menu_start_new_game=0x7f080001;
         public static final int menu_toggle_tile_numbers=0x7f080002;

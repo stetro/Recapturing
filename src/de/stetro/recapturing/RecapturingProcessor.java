@@ -28,8 +28,14 @@ import org.opencv.imgproc.Imgproc;
 
 import android.graphics.Bitmap;
 import android.util.Log;
+import de.stetro.recapturing.main.MainActivity;
 import de.stetro.recapturing.pojo.FramePackage;
 
+/**
+ * Image registration process with time measurement of each operation
+ * 
+ * @author Steffen Troester
+ */
 public class RecapturingProcessor {
 
 	private static final String TAG = "Recapturing Processor";
@@ -52,9 +58,23 @@ public class RecapturingProcessor {
 	private static String filenameDetection;
 	private static String filename;;
 
+	/**
+	 * Prepares and allocate the gray scale {@link Mat} images
+	 * 
+	 * @param width
+	 * @param height
+	 */
 	public synchronized void prepareViewSize(int width, int height) {
 		grayPicture = new Mat(height, width, CvType.CV_8UC1);
 		blitPicture = new Mat(height, width, CvType.CV_8UC1);
+		setUpConfigurationFiles();
+	}
+
+	/**
+	 * Generates configuration files for each {@link FeatureDetector} or
+	 * {@link DescriptorExtractor}
+	 */
+	private void setUpConfigurationFiles() {
 		filename = MainActivity.getTempFileName("yml");
 		filenameDetection = MainActivity.getTempFileName("xml");
 		switch (FEATURE_DETECTOR_METHOD) {
@@ -68,13 +88,19 @@ public class RecapturingProcessor {
 			writeFile(filename, "%YAML:1.0\n" + "radiusList: 3.0\n" + "numberList: 3.0\n" + "dMax: 5.85\n" + "dMin: 8.2\n" + "indexChanges: 30\n" + "threshold: 10\n" + "octaves: 1\n");
 			break;
 		}
-		switch(DESCRIPTOR_EXTRATOR_METHOD){
+		switch (DESCRIPTOR_EXTRATOR_METHOD) {
 		case DescriptorExtractor.FREAK:
 			writeFile(filenameDetection, "%YAML:1.0\n" + "radiusList: 3.0\n" + "numberList: 3.0\n" + "dMax: 5.85\n" + "dMin: 8.2\n" + "indexChanges: 30\n" + "threshold: 10\n" + "nOctaves: 1\n");
 			break;
 		}
 	}
 
+	/**
+	 * Writes content to file path (Configuration files)
+	 * 
+	 * @param path
+	 * @param content
+	 */
 	protected static void writeFile(String path, String content) {
 		FileOutputStream stream = null;
 		try {
@@ -93,6 +119,13 @@ public class RecapturingProcessor {
 		}
 	}
 
+	/**
+	 * Main process routine with input Image from {@link MainActivity} (Camera
+	 * frame)
+	 * 
+	 * @param inputPicture
+	 * @return
+	 */
 	public synchronized FramePackage process(Mat inputPicture) {
 		FramePackage fp = new FramePackage();
 		long start = System.currentTimeMillis();
@@ -194,7 +227,7 @@ public class RecapturingProcessor {
 	private static Mat computeDescriptors(Mat inputPicture, MatOfKeyPoint matOfKeyPoint) {
 		Mat descriptors = new Mat();
 		DescriptorExtractor descriptorExtractor = DescriptorExtractor.create(DESCRIPTOR_EXTRATOR_METHOD);
-		descriptorExtractor.read(filenameDetection);
+		// descriptorExtractor.read(filenameDetection);
 		descriptorExtractor.compute(inputPicture, matOfKeyPoint, descriptors);
 		return descriptors;
 	}

@@ -1,4 +1,4 @@
-package de.stetro.recapturing;
+package de.stetro.recapturing.main;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,12 +6,10 @@ import java.io.IOException;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
-import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -22,74 +20,41 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import de.stetro.recapturing.R;
+import de.stetro.recapturing.RecapturingProcessor;
+import de.stetro.recapturing.main.util.ImageUtil;
+import de.stetro.recapturing.main.util.OpenCVBaseLoaderCallbackListener;
+import de.stetro.recapturing.main.util.PickImageOnClickListener;
+import de.stetro.recapturing.main.util.SeekBarDistanceChangeListener;
 import de.stetro.recapturing.pojo.FramePackage;
 
+/**
+ * Main view component of this application. Loads images and delegate them to
+ * the {@link RecapturingProcessor}.
+ * 
+ * @author Steffen Troester
+ */
 public class MainActivity extends Activity implements CvCameraViewListener, View.OnTouchListener {
 
+	/**
+	 * Maximum image size (width or height)
+	 */
 	private static final int PREVIEW_SIZE = 300;
+	/**
+	 * Maximum image width of camera preview
+	 */
 	private static final int MAX_WIDTH = 680;
+	/**
+	 * Maximum image height of camera preview
+	 */
 	private static final int MAX_HEIGHT = 460;
 
-	private final class SeekBarDistanceChangeListener implements OnSeekBarChangeListener {
-		private final TextView tv;
-		private final SeekBar sb;
-
-		private SeekBarDistanceChangeListener(TextView tv, SeekBar sb) {
-			this.tv = tv;
-			this.sb = sb;
-		}
-
-		@Override
-		public void onStopTrackingTouch(SeekBar arg0) {
-		}
-
-		@Override
-		public void onStartTrackingTouch(SeekBar arg0) {
-		}
-
-		@Override
-		public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
-			recapturingProcessor.setDistance((int) sb.getProgress());
-			tv.setText("Feature Distance Limit: " + (int) sb.getProgress());
-		}
-	}
-
-	private final class OpenCVBaseLoaderCallbackListener extends BaseLoaderCallback {
-		private OpenCVBaseLoaderCallbackListener(Context AppContext) {
-			super(AppContext);
-		}
-
-		@Override
-		public void onManagerConnected(int status) {
-			switch (status) {
-			case LoaderCallbackInterface.SUCCESS:
-				Log.i(TAG, "OpenCV loaded successfully");
-				openCvCameraView.setOnTouchListener(MainActivity.this);
-				openCvCameraView.enableView();
-				break;
-			default:
-				super.onManagerConnected(status);
-				break;
-			}
-		}
-	}
-
-	class PickImageOnClickListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			Intent pickPhoto = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-			startActivityForResult(pickPhoto, 1);
-		}
-	}
-
-	private static final String TAG = "Recapturing App";
+	public static final String TAG = "Recapturing App";
 	private static ContextWrapper context;
 
 	private CameraBridgeViewBase openCvCameraView;
@@ -115,13 +80,19 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 		MainActivity.context = this;
 	}
 
+	/**
+	 * Prepares the the slide of main_layout.xml
+	 */
 	private void prepareDistanceSeekBar() {
 		final SeekBar sb = (SeekBar) findViewById(R.id.distance_seeker);
 		sb.setProgress(20);
 		final TextView tv = (TextView) findViewById(R.id.distance_text);
-		sb.setOnSeekBarChangeListener(new SeekBarDistanceChangeListener(tv, sb));
+		sb.setOnSeekBarChangeListener(new SeekBarDistanceChangeListener(tv, sb, recapturingProcessor));
 	}
 
+	/**
+	 * Prepares the layout and fullscreen settings
+	 */
 	private void prepareLayoutAndFlags() {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -130,26 +101,33 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 		setContentView(R.layout.main_layout);
 	}
 
+	/**
+	 * prepares the image picker dialogue
+	 */
 	private void prepareImagePicker() {
 		imagePicker = (ImageButton) findViewById(R.id.image_picker);
-		imagePicker.setOnClickListener(new PickImageOnClickListener());
+		imagePicker.setOnClickListener(new PickImageOnClickListener(this));
 	}
 
 	private void prepareRecapturingProcessor() {
 		recapturingProcessor = new RecapturingProcessor();
 	}
 
+	/**
+	 * prepares the camera view element of main_layout.xml and camera capturing
+	 * size
+	 */
 	private void prepareCameraView() {
-		openCvCameraView = (CameraBridgeViewBase) findViewById(R.id.recapturing_camera_preview);
-		openCvCameraView.setMaxFrameSize(MAX_WIDTH, MAX_HEIGHT);
-		openCvCameraView.setCvCameraViewListener(this);
+		setOpenCvCameraView((CameraBridgeViewBase) findViewById(R.id.recapturing_camera_preview));
+		getOpenCvCameraView().setMaxFrameSize(MAX_WIDTH, MAX_HEIGHT);
+		getOpenCvCameraView().setCvCameraViewListener(this);
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
-		if (openCvCameraView != null)
-			openCvCameraView.disableView();
+		if (getOpenCvCameraView() != null)
+			getOpenCvCameraView().disableView();
 	}
 
 	@Override
@@ -160,8 +138,8 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 
 	public void onDestroy() {
 		super.onDestroy();
-		if (openCvCameraView != null)
-			openCvCameraView.disableView();
+		if (getOpenCvCameraView() != null)
+			getOpenCvCameraView().disableView();
 	}
 
 	@Override
@@ -170,6 +148,9 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 		return true;
 	}
 
+	/**
+	 * Forward the prepared imagesize to {@link RecapturingProcessor}
+	 */
 	public void onCameraViewStarted(int width, int height) {
 		viewWidth = width;
 		viewHeight = height;
@@ -179,6 +160,9 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 	public void onCameraViewStopped() {
 	}
 
+	/**
+	 * Pipes touch events to {@link RecapturingProcessor}
+	 */
 	public boolean onTouch(View view, MotionEvent event) {
 		int xpos, ypos;
 		xpos = (view.getWidth() - viewWidth) / 2;
@@ -225,8 +209,8 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 				Bitmap bitmap, preview, templateBitmap;
 				try {
 					bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
-					preview = resize(bitmap, PREVIEW_SIZE);
-					templateBitmap = resize(bitmap, MAX_WIDTH);
+					preview = ImageUtil.resize(bitmap, PREVIEW_SIZE);
+					templateBitmap = ImageUtil.resize(bitmap, MAX_WIDTH);
 					imagePicker.setImageBitmap(preview);
 					recapturingProcessor.setTemplateBitmap(templateBitmap);
 				} catch (Exception e) {
@@ -237,18 +221,13 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 		}
 	}
 
-	private Bitmap resize(Bitmap bitmap, int previewSize) {
-		Bitmap resized;
-		if (bitmap.getHeight() > bitmap.getWidth()) {
-			float factor = ((float) bitmap.getWidth() / (float) bitmap.getHeight());
-			resized = Bitmap.createScaledBitmap(bitmap, (int) (previewSize * factor), previewSize, true);
-		} else {
-			float factor = ((float) bitmap.getHeight() / (float) bitmap.getWidth());
-			resized = Bitmap.createScaledBitmap(bitmap, previewSize, (int) (previewSize * factor), true);
-		}
-		return resized;
-	}
-
+	/**
+	 * Get temporary file path of application context with a specific file
+	 * extension.
+	 * 
+	 * @param extension
+	 * @return String file path
+	 */
 	public static String getTempFileName(String extension) {
 		File cache = context.getCacheDir();
 		if (!extension.startsWith("."))
@@ -262,5 +241,13 @@ public class MainActivity extends Activity implements CvCameraViewListener, View
 			Log.d("ERROR", "Failed to get temp file name. Exception is thrown: " + e);
 		}
 		return null;
+	}
+
+	public CameraBridgeViewBase getOpenCvCameraView() {
+		return openCvCameraView;
+	}
+
+	public void setOpenCvCameraView(CameraBridgeViewBase openCvCameraView) {
+		this.openCvCameraView = openCvCameraView;
 	}
 }

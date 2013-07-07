@@ -30,7 +30,7 @@
         android:label="@string/app_name"
         android:theme="@style/custom_titlebar" >
         <activity
-            android:name=".MainActivity"
+            android:name="de.stetro.recapturing.main.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="landscape" >
             <intent-filter>
